@@ -1,4 +1,4 @@
-module Utils.Matrix where
+module Utils.Matrix (Matrix, Position, createMatrix, getMatrixValue, setMatrixValue, numRows, numCols, matrixToList, listToMatrix, printMatrix) where
 
 import Data.List
 
@@ -46,3 +46,7 @@ matrixToList (Matrix rows) = rows
 -- Converte uma lista de listas em uma matriz
 listToMatrix :: [[a]] -> Matrix a
 listToMatrix = Matrix
+
+-- Função para imprimir a matriz
+printMatrix :: Show a => [[a]] -> IO ()
+printMatrix grid = mapM_ (print . map show) grid

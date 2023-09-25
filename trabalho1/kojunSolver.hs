@@ -2,67 +2,96 @@ module KojunSolver where
 
 import Utils.Matrix
 
--- Gera recursivamente um conjunto com todas as posições da região que contém a posição (row, col)
-getRegionFromPosition :: Eq a => [[a]] -> a -> Int -> Int -> [(Int, Int)] -> [(Int, Int)]
+-- Gera recursivamente uma lista com todas as posições da região que contém a posição (row, col)
+getRegionFromPosition :: (Eq a) => [[a]] -> a -> Int -> Int -> [(Int, Int)] -> [(Int, Int)]
 getRegionFromPosition regionGrid region row col visited
-    | row < 0 || row >= length regionGrid || col < 0 || col >= length (head regionGrid) ||
-      regionGrid !! row !! col /= region || (row, col) `elem` visited = visited
+    | row < 0
+        || row >= length regionGrid             -- length regionGrid retorna o número de linhas da matriz
+        || col < 0
+        || col >= length (head regionGrid)      -- length (head regionGrid) retorna o número de colunas do primeiro elemento da matriz
+        || regionGrid !! row !! col /= region   -- regionGrid !! row !! col retorna o elemento da matriz na posição (row, col)
+        || (row, col) `elem` visited =          -- Verifica se a posição atual (row, col) já está na lista de posições visitadas
+        visited                                 -- Se todas as guardas forem atendidas, retornam visited (a lista de posições visitadas até agora)
     | otherwise =
         let visited' = (row, col) : visited
-        in getRegionFromPosition regionGrid region (row - 1) col visited' ++
-           getRegionFromPosition regionGrid region (row + 1) col visited' ++
-           getRegionFromPosition regionGrid region row (col - 1) visited' ++
-           getRegionFromPosition regionGrid region row (col + 1) visited'
+        in foldr
+            (\(r, c) accVisited -> getRegionFromPosition regionGrid region r c accVisited) visited' -- Acumula o resultado das chamadas nas posições adjacentes
+            [(row - 1, col), (row + 1, col), (row, col - 1), (row, col + 1)]
+{- 
+A função getRegionFromPosition é uma função polimórfica em Haskell. Ela recebe os seguintes argumentos:
+- Uma matriz representada por uma lista de listas, onde o tipo dos elementos é a.
+- Um elemento da matriz (representando a região que queremos explorar).
+- Coordenadas (row, col) que indicam a posição inicial na matriz.
+- Uma lista de posições visitadas.
+A parte (Eq a) => na assinatura da função é uma restrição de classe de tipo, especificando um requisito sobre o tipo a
+que a função pode aceitar. Nesse caso, (Eq a) significa que o tipo a deve ser uma instância da classe de tipos Eq, que
+é a classe de tipos dos tipos que suportam a operação de igualdade (==).
+A lista [(row - 1, col), (row + 1, col), (row, col - 1), (row, col + 1)] não é diretamente parte da função lambda.
+É usada dentro da função foldr para mapear sobre as posições adjacentes e chamar getRegionFromPosition para cada uma delas.
+-}
 
--- Verifica se uma posição é válida
-isValid :: [[Int]] -> [[Char]] -> Int -> Int -> Int -> Bool
-isValid valueGrid regionGrid row col value =
-    let region = regionGrid !! row !! col
-        regionSize = sum [1 | row <- regionGrid, cell <- row, cell == region]
-        neighbors = [(row - 1, col), (row + 1, col), (row, col - 1), (row, col + 1)]
-        validNeighbor (r, c) =
-            r >= 0 && r < length valueGrid && c >= 0 && c < length (head valueGrid) &&
-            valueGrid !! r !! c /= value
-    in value >= 1 && value <= regionSize &&
-       all validNeighbor neighbors &&
-       (row == 0 || valueGrid !! (row - 1) !! col /= value || regionGrid !! (row - 1) !! col /= region || valueGrid !! (row - 1) !! col > value) &&
-       (row == length valueGrid - 1 || valueGrid !! (row + 1) !! col /= value || regionGrid !! (row + 1) !! col /= region || valueGrid !! (row + 1) !! col < value)
-
--- Resolve o quebra-cabeça Kojun
-solveKojun :: [[Int]] -> [[Char]] -> [[Int]]
-solveKojun valueGrid regionGrid = if solve valueGrid regionGrid 0 0
-                                  then valueGrid
-                                  else replicate (length valueGrid) (replicate (length (head valueGrid)) 0)
+-- Verifica se um valor Int pode ser posicionado em uma posição Position da matriz de valores seguindo as regras do Kojun:
+-- 1. Inserir um número em cada célula da grade para que cada região de tamanho N contenha cada número de 1 a N exatamente uma vez.
+-- 2. Os números em células ortogonalmente adjacentes devem ser diferentes.
+-- 3. Se duas células são adjacentes verticalmente na mesma região, o número na célula superior deve ser maior que o número na célula inferior.
+isValidPlacement :: [[Int]] -> [[Char]] -> Position -> Int -> Bool
+isValidPlacement valueGrid regionGrid (row, col) value
+    | valueGrid !! row !! col /= 0 = False      -- Verifica se a posição já está ocupada por algum valor diferente de 0
+    | value < 1 || value > regionSize = False   -- Verifica se o número está entre 1 e N, onde N é o tamanho da região
+    | hasAdjacentValue = False                  -- Verifica se algum dos valores adjacentes é igual ao valor que queremos inserir
+    | hasValueInRegion = False                  -- Verifica se o valor já está na região
+    | isTopInvalid = False                      -- Se a posição acima for inválida (for da mesma região e menor em valor), retorna False
+    | isBottomInvalid = False                   -- Se a posição abaixo for inválida (for da mesma região e maior em valor), retorna False
+    | otherwise = True
   where
-    solve [] _ _ _ = True
-    solve (r:rs) regionGrid row col
-        | col == length r = solve rs regionGrid (row + 1) 0
-        | r !! col /= 0 = solve (r:rs) regionGrid row (col + 1)
-        | otherwise =
-            let region = regionGrid !! row !! col
-            in any (\v -> isValid valueGrid regionGrid row col v &&
-                          solve (take row valueGrid ++ [take col r ++ [v] ++ drop (col + 1) r] ++ drop (row + 1) valueGrid) regionGrid row (col + 1))
-                   [1..length valueGrid]
+    numRows = length valueGrid
+    numCols = length (head valueGrid)
+    region = regionGrid !! row !! col
+    -- Filtra as posições adjacentes que são válidas (dentro da matriz) e obtém os valores das posições adjacentes
+    adjacentPositions = filter (\(r, c) -> r >= 0 && r < numRows && c >= 0 && c < numCols) [(row - 1, col), (row + 1, col), (row, col - 1), (row, col + 1)]
+    adjacentValues = map (\(r, c) -> valueGrid !! r !! c) adjacentPositions
+    -- Obtém as posições da região que contém a posição (row, col)
+    regionPositions = getRegionFromPosition regionGrid region row col []
+    regionSize = length regionPositions
 
--- Função para imprimir a grade
-printGrid :: Show a => [[a]] -> IO ()
-printGrid grid = mapM_ (print . map show) grid
+    -- (2) Verifica se algum dos valores adjacentes é igual ao valor que queremos inserir
+    hasAdjacentValue = any (== value) adjacentValues
 
--- Verifica se a solução é válida
-checkSolution :: [[Int]] -> [[Char]] -> [[Int]] -> Bool
-checkSolution valueGrid regionGrid solutionGrid =
-    let numRows' = length valueGrid
-        numCols' = length (head valueGrid)
-        isValidCell r c =
-            let region = regionGrid !! r !! c
-                value = solutionGrid !! r !! c
-                regionSize = sum [1 | row <- regionGrid, cell <- row, cell == region]
-                neighbors = [(r - 1, c), (r + 1, c), (r, c - 1), (r, c + 1)]
-                validNeighbor (nr, nc) =
-                    nr >= 0 && nr < numRows' && nc >= 0 && nc < numCols' &&
-                    solutionGrid !! nr !! nc /= value
-            in value >= 1 && value <= regionSize &&
-               all validNeighbor neighbors &&
-               (r == 0 || regionGrid !! (r - 1) !! c /= region || valueGrid !! (r - 1) !! c > value) &&
-               (r == numRows' - 1 || regionGrid !! (r + 1) !! c /= region || valueGrid !! (r + 1) !! c < value)
-    in all (\r -> all (\c -> valueGrid !! r !! c == 0 || isValidCell r c) [0..numCols' - 1]) [0..numRows' - 1]
+    -- (1) Verifica se o valor já está presente na região que contém a posição
+    hasValueInRegion = value `elem` map (\(r, c) -> valueGrid !! r !! c) regionPositions
+
+    -- (3) Verifica se a posição acima de (row, col) é da mesma região e se o valor é maior
+    isTopSameRegion = (row - 1, col) `elem` regionPositions
+    isTopInvalid = isTopSameRegion && valueGrid !! (row - 1) !! col <= value
+
+    -- (3) Verifica se a posição abaixo de (row, col) é da mesma região e se o valor é menor
+    isBottomSameRegion = (row + 1, col) `elem` regionPositions
+    isBottomInvalid = isBottomSameRegion && valueGrid !! (row + 1) !! col >= value   
+
+-- Resolve o Kojun recursivamente
+solveKojun :: [[Int]] -> [[Char]] -> Int -> Int -> Maybe [[Int]]
+solveKojun valueGrid regionGrid row col
+    | row == length valueGrid = Just valueGrid
+    | col == length (head valueGrid) = solveKojun valueGrid regionGrid (row + 1) 0
+    | valueGrid !! row !! col /= 0 = solveKojun valueGrid regionGrid row (col + 1)
+    | otherwise = tryValues valueGrid regionGrid row col [1..length valueGrid]
+  where
+    tryValues :: [[Int]] -> [[Char]] -> Int -> Int -> [Int] -> Maybe [[Int]]
+    tryValues _ _ _ _ [] = Nothing
+    tryValues vg rg r c (value:rest)
+        | isValidPlacement vg rg (r, c) value = 
+            case solveKojun (updateGrid vg r c value) rg r (c + 1) of
+                Just result -> Just result
+                Nothing -> tryValues vg rg r c rest
+        | otherwise = tryValues vg rg r c rest
+    
+    updateGrid :: [[Int]] -> Int -> Int -> Int -> [[Int]]
+    updateGrid vg r c value = 
+        take r vg ++
+        [take c (vg !! r) ++ [value] ++ drop (c + 1) (vg !! r)] ++
+        drop (r + 1) vg
+
+-- Função que imprime uma grade de forma formatada
+printGridFormatted :: Show a => [[a]] -> IO ()
+printGridFormatted grid =
+    mapM_ (putStrLn . unwords . map show) grid
