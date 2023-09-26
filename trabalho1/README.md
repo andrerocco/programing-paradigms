@@ -44,3 +44,18 @@ Para o suporte à estrutura de matriz no Haskell, foi optado pela criação de u
 O programa principal inicia lendo e extraindo as matrizes do arquivos .txt especificado em contents. A partir das linhas do arquivo de texto, inicializa as estruturas do tipo Matrix que correspondem à matriz de valores e à matriz de regiões. Em seguida, é chamada a função solveKojun que aplicará o algoritmo de backtracking desenvolvido sobre o tabuleiros (representado pelas duas matrizes).
 
 ### Algoritmo de backtracking
+
+O algoritmo de backtracking é uma técnica de busca recursiva que tenta encontrar uma solução para um problema através de tentativa e erro, retrocedendo (backtrack) quando uma tentativa falha. Começando de uma configuração inicial, o algoritmo faz uma escolha dentre várias possíveis e avança na solução. Se chegar a um ponto onde não é possível continuar sem violar uma condição ou restrição, ele retrocede para a escolha anterior e tenta outra opção. Esse processo recursivo continua até que uma solução seja encontrada ou todas as possibilidades tenham sido exploradas.
+O módulo KojunSolver contém as funções responsáveis por aplicar o algoritmo de backtracking. Seu ponto de entrada é a função recursiva solveKojun. Ela testa as condições de parada ou continuidade do algoritmo de backtracking e, no caso de continuidade, faz uma chamada recursiva para si mesma com a próxima posição do tabuleiro a ser resolvida (possivelmente).
+A função tryValues faz a tentativa de cada um dos valores de 1 a maxRegionSize para uma célula do tabuleiro. A validação se um valor é válido ou não em uma célula do tabuleiro é feita por isValidPlacement. Essa função, em sua essência, consiste implementação a validação de jogadas baseada nas [regras do jogo](#kojun-solver).
+Note que para validar corretamente se uma jogada é correta ou não, ter como informação os valores das posições adjacentes (os quais podem ser facilmente obtidos utilizando a função auxiliar getMatrixValue implementada pelo módulo Matrix) e precisamos também das outras posições do tabuleiro que estão na mesma região. Para obtermos a segunda, foi desenvolvida a função getRegionFromPosition.
+
+### Otimizações realizadas
+
+Para cada célula vazia do tabuleiro, é chamada a função isValidPlacement é chamada para cada um dos valores possíveis (em ordem crescente). Dessa forma, a função isValidPlacement mostra-se de grande impacto no desempenho do algoritmo de backtracking.
+A função isValidPlacement chama getRegionFromPosition toda vez que é executada. Na primeira implementação realizada, a função getRegionFromPosition position varria todas as células da matriz de regiões para gerar a lista de posições (linha, coluna) de uma região. A partir disso, a função foi otimizada para realizar uma busca recursiva de posições da região a partir de um ponto, visitando assim apenas K células (onde K é o número de elementos daquela região).
+Seria possível otimizar mais ainda a execução de isValidPlacement gerando um hashmap com todas as posições de cada uma regiões apenas uma vez antes de sua execução e passando essa informação como argumento isValidPlacement. Entretanto, como essa otimização envolveria um aumento da complexidade da implementação e como o desempenho não era uma preocupação para essa proposta, essa otimização não foi realizada.
+
+## Execução do programa
+
+Para executar o programa, é necessário ter o [Glasgow Haskell Compiler](https://www.haskell.org/ghc/) instalado. Em seguida, basta executar o comando `make run` para compilar e executar o programa. Após a compilação, é possível apenas executar o programa com o comando `./main`.
