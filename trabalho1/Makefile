@@ -1,12 +1,12 @@
 # Nome do executável
-EXECUTABLE = Main
+EXECUTABLE = main
 
 # Diretório para os arquivos intermediários
 OUTPUT_DIR = ./output
 
 # Caminhos dos arquivos
-SOURCE_FILES = Main.hs
-MODULE_FILES = utils/Matrix.hs
+SOURCE_FILES = main.hs
+MODULE_FILES = utils/matrix.hs
 
 # Comando para compilar o código
 GHCCOMPILE = ghc -o $(EXECUTABLE) $(SOURCE_FILES) $(MODULE_FILES) -outputdir=$(OUTPUT_DIR) -hidir=$(OUTPUT_DIR) -odir=$(OUTPUT_DIR)

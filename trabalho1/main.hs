@@ -2,7 +2,6 @@ import Utils.Matrix
 import KojunSolver
 
 import Data.Char (isAlpha)
-import Control.Monad (forM_)
 
 -- Função para filtrar caracteres alfabéticos
 filterAlphabetic :: String -> String
@@ -14,28 +13,31 @@ main = do
     -- O tamanho N da matriz (N x N) na primeira linha
     -- A matriz de valores (ocupando N linhas)
     -- A matriz de regiões (ocupando N linhas)
-    contents <- readFile "./inputs/10x10/kojun_10.txt"
+    contents <- readFile "./inputs/8x8/kojun_4.txt"
     
-    -- lines divide a string em uma lista de strings, cada uma representando uma linha do arquivo
+    -- A partir do arquivo, extrai o tamanho da matriz e as matrizes de valores e regiões
     let linesRead = lines contents
-    -- read converte uma string em um valor de um tipo específico
     let matrixSize = read (head linesRead) :: Int
+    let valueGrid = listToMatrix . map (map read) . take matrixSize . map words . drop 1 $ linesRead
+    let regionGrid = listToMatrix . map (map head) . take matrixSize . map words . drop 1 . drop matrixSize $ linesRead
     
-    -- Extrai a matriz de valores e a matriz de regiões
-    let valueGrid = map (map read . words) (take matrixSize (drop 1 linesRead)) :: [[Int]]
-    let regionGrid = map filterAlphabetic (take matrixSize (drop (matrixSize + 1) linesRead))
-    {-
-    drop 1 linesRead remove a primeira linha (que é o tamanho da matriz) e retorna as linhas restantes.
-    take matrixSize pega as primeiras matrixSize linhas após a remoção da primeira linha.
-    words transforma uma string em uma lista de palavras (divide a string em uma lista de substrings separadas por espaços). 
-    Usar . entre map read e words cria uma nova função que, quando aplicada a uma string, primeiro aplica words para dividir
-    a string em palavras e, em seguida, aplica map read a cada palavra resultante, convertendo-as em valores.
-    -}
-    
+    putStrLn "\n> Matriz de valores:"
+    printMatrixFormatted valueGrid
+
+    putStrLn "\n> Matriz de regiões:"
+    printMatrixFormatted regionGrid
+
+    let maxRegionSize = matrixSize
+    -- Valor chute para o tamanho da maior região
+    -- Se for menor que o tamanho da matriz, a solução não será encontrada
+    -- Se for muito maior que o tamanho da matriz, a solução será encontrada, mas o desempenho será degradado
+
     -- Resolve o Kojun
-    let solution = solveKojun valueGrid regionGrid 0 0
+    let solution = solveKojun valueGrid regionGrid (0, 0) maxRegionSize
 
     -- Imprime a solução (ou uma mensagem indicando que não há solução)
     case solution of
-        Just solutionGrid -> printGridFormatted solutionGrid
+        Just solutionGrid -> do
+            putStrLn "\n> Solução encontrada:"
+            printMatrixFormatted solutionGrid
         Nothing -> print "Não há solução possível."
