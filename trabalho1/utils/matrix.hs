@@ -19,11 +19,11 @@ getMatrixValue (Matrix rows) (row, col) = (rows !! row) !! col
 -}
 
 -- Define um valor em uma posição específica na matriz
-setMatrixValue :: Matrix a -> Position -> a -> Matrix a
-setMatrixValue (Matrix []) (_, _) _ = error "Empty matrix"
-setMatrixValue (Matrix rows) (row, col) value | row < 0 || row >= length rows = error "Invalid row"
-                                              | col < 0 || col >= length (head rows) = error "Invalid column"
-                                              | otherwise = Matrix (take row rows ++ [take col (rows !! row) ++ [value] ++ drop (col + 1) (rows !! row)] ++ drop (row + 1) rows)
+setMatrixValue :: [[a]] -> Position -> a -> [[a]]
+setMatrixValue matrix (row, col) value
+    | row < 0 || row >= length matrix = error "Invalid row"
+    | col < 0 || col >= length (head matrix) = error "Invalid column"
+    | otherwise = take row matrix ++ [take col (matrix !! row) ++ [value] ++ drop (col + 1) (matrix !! row)] ++ drop (row + 1) matrix
 {-
 (Matrix rows) desestrutura o primeiro argumento, extraindo as linhas da matriz. rows agora é do tipo [[a]], ou seja, é uma lista de listas.
 take row rows ++ ... ++ drop (row + 1) rows junta as linhas antes da linha que queremos modificar, a linha modificada e as linhas após a linha

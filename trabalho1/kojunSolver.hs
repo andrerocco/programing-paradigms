@@ -80,16 +80,21 @@ solveKojun valueGrid regionGrid row col
     tryValues _ _ _ _ [] = Nothing
     tryValues vg rg r c (value:rest)
         | isValidPlacement vg rg (r, c) value = 
-            case solveKojun (updateGrid vg r c value) rg r (c + 1) of
+            case solveKojun (setMatrixValue vg (r, c) value) rg r (c + 1) of
                 Just result -> Just result
                 Nothing -> tryValues vg rg r c rest
         | otherwise = tryValues vg rg r c rest
-    
-    updateGrid :: [[Int]] -> Int -> Int -> Int -> [[Int]]
-    updateGrid vg r c value = 
-        take r vg ++
-        [take c (vg !! r) ++ [value] ++ drop (c + 1) (vg !! r)] ++
-        drop (r + 1) vg
+    {- 
+    take r vg ++ ...:
+        take r vg pega as primeiras r linhas da grade original vg.
+    [take c (vg !! r) ++ [value] ++ drop (c + 1) (vg !! r)] ++ ...:
+        vg !! r pega a linha r da grade original.
+        take c (vg !! r) pega os primeiros c elementos dessa linha, ou seja, as colunas até a coluna c - 1.
+        drop (c + 1) (vg !! r) pega os elementos a partir da coluna c + 1 até o final da linha.
+        [value] é uma lista contendo apenas o value que queremos inserir e será concatenada com as colunas até a coluna c - 1.
+    ... ++ drop (r + 1) vg:
+        drop (r + 1) vg pega as linhas a partir da linha r + 1 até o final da grade original.
+     -}
 
 -- Função que imprime uma grade de forma formatada
 printGridFormatted :: Show a => [[a]] -> IO ()
