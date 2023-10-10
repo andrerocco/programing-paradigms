@@ -13,7 +13,7 @@ main = do
     -- O tamanho N da matriz (N x N) na primeira linha
     -- A matriz de valores (ocupando N linhas)
     -- A matriz de regiões (ocupando N linhas)
-    contents <- readFile "./inputs/8x8/kojun_4.txt"
+    contents <- readFile "./inputs/17x17/kojun_60.txt"
     
     -- A partir do arquivo, extrai o tamanho da matriz e as matrizes de valores e regiões
     let linesRead = lines contents
