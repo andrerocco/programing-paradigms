@@ -1,0 +1,83 @@
+# IntelliJ IDEA
+.idea/
+
+# SBT (Scala Build Tool)
+target/
+
+# Compiled bytecode and generated files
+*.class
+*.jar
+*.log
+log/
+logs/
+project/project
+project/target
+project/target-resolutions
+project/boot/
+target/
+dist/
+tmp/
+dist/
+
+# Mac OS
+.DS_Store
+
+# Editor backup files
+*~
+
+# OS-specific files
+desktop.ini
+Thumbs.db
+
+# Temporary files
+.sbtserver
+.idea_modules/
+
+# Scala-specific files
+lib_managed/
+lib/_managed/
+lib/
+
+# Scala-IDE (Eclipse-based Scala IDE)
+.metadata/
+
+# User-specific files
+/.history
+/.scala_history
+/.spark_shell_history
+/.sbt_history
+/.python_history
+/.ivy2/
+/.coursier/
+/.config/
+/.npm/
+/.node/
+/bin/
+/data/
+/logs/
+/out/
+/run/
+/tmp/
+/.externalNativeBuild/
+
+# Play Framework
+/target/
+logs/
+dist/
+/public/
+/runtimes/
+/project/target/
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+
+# Gradle
+.gradle/
+build/
+buildSrc/

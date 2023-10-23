@@ -1,0 +1,13 @@
+6
+2 0 0 0 1 0
+0 0 0 3 0 0
+0 3 0 0 5 3
+0 0 0 0 0 0
+0 0 3 0 4 2
+0 0 0 0 0 0
+a a b b b c
+d d d d d c
+e f f f d g
+e e e f g g
+h h i j j j
+k k i i j j

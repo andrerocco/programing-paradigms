@@ -1,0 +1,76 @@
+package solver
+
+import utils.Matrix
+
+class KojunSolver(valueGrid: Matrix[Int], regionGrid: Matrix[String]) {
+  type Position = (Int, Int)
+
+  // Function to check if two cells are adjacent
+  private def areAdjacent(pos1: Position, pos2: Position): Boolean = {
+    val (row1, col1) = pos1
+    val (row2, col2) = pos2
+
+    (row1 == row2 && Math.abs(col1 - col2) == 1) || (col1 == col2 && Math.abs(row1 - row2) == 1)
+  }
+
+  // Function to get the region from a given position
+  private def getRegionFromPosition(region: Matrix[String], regionName: String, row: Int, col: Int, visited: List[Position]): List[Position] = {
+    val numRows = region.numRows
+    val numCols = region.numCols
+
+    if (
+      row < 0 || row >= numRows ||
+      col < 0 || col >= numCols ||
+      region.getMatrixValue(row, col) != regionName ||
+      visited.contains((row, col))
+    ) visited
+    else {
+      val visitedUpdated = (row, col) :: visited
+      val adjacentPositions = List((row - 1, col), (row + 1, col), (row, col - 1), (row, col + 1))
+      val newVisited = adjacentPositions.foldLeft(visitedUpdated)((accVisited, pos) =>
+        getRegionFromPosition(region, regionName, pos._1, pos._2, accVisited)
+      )
+      newVisited
+    }
+  }
+
+  // Function to check if a value placement is valid
+  private def isValidPlacement(row: Int, col: Int, value: Int): Boolean = {
+    val numRows = valueGrid.numRows
+    val numCols = valueGrid.numCols
+    val regionName = regionGrid.getMatrixValue(row, col)
+    val regionPositions = getRegionFromPosition(regionGrid, regionName, row, col, List())
+
+    !(
+      valueGrid.getMatrixValue(row, col) != 0 || // The cell is already occupied
+      value < 1 || value > regionPositions.size || // Value is out of the valid range
+      regionPositions.exists(pos => areAdjacent((row, col), pos) && valueGrid.getMatrixValue(pos._1, pos._2) == value) || // Adjacent cells have the same value
+      regionPositions.exists(pos => valueGrid.getMatrixValue(pos._1, pos._2) == value) || // Value is already in the region
+      (regionPositions.exists(pos => pos._1 == row - 1 && pos._2 == col) && valueGrid.getMatrixValue(row - 1, col) > value) || // Top adjacent cell is not greater
+      (regionPositions.exists(pos => pos._1 == row + 1 && pos._2 == col) && valueGrid.getMatrixValue(row + 1, col) < value) // Bottom adjacent cell is not smaller
+    )
+  }
+
+  // Function to solve the Kojun puzzle
+  private def solveKojun(row: Int, col: Int, maxRegionSize: Int): Option[Matrix[Int]] = {
+    val numRows = valueGrid.numRows
+    val numCols = valueGrid.numCols
+
+    if (row == numRows) Some(valueGrid) // Reached the end of the matrix
+    else if (col == numCols) solveKojun(row + 1, 0, maxRegionSize) // Reached the end of the row, move to the next row
+    else if (valueGrid.getMatrixValue(row, col) != 0) solveKojun(row, col + 1, maxRegionSize) // Cell already occupied, move to the next cell
+    else {
+      val valuesToTry = (1 to maxRegionSize).toList
+      val validValues = valuesToTry.filter(value => isValidPlacement(row, col, value))
+      validValues.collectFirst {
+        case value if solveKojun(row, col + 1, maxRegionSize).isDefined =>
+          valueGrid.setMatrixValue((row, col), value)
+      }
+    }
+  }
+
+  // Function to initiate the Kojun solving process
+  def solveKojun(): Option[Matrix[Int]] = {
+    solveKojun(0, 0, regionGrid.numRows)
+  }
+}
