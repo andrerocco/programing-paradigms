@@ -2,6 +2,7 @@ package solver
 
 import utils.Matrix
 
+import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable
 import scala.language.postfixOps
@@ -39,114 +40,124 @@ class KojunSolver(valueGrid: Matrix[Int], regionGrid: Matrix[String]) {
    * 3. Se duas células são adjacentes verticalmente na mesma região, o número na célula superior deve ser maior que o
    * número na célula inferior.
    */
-  private def canInsertValue(position: Position, value: Int): Boolean = {
+  private def canInsertValue(
+    position: Position,
+    value: Int,
+    valueGrid: Matrix[Int],
+    regionGrid: Matrix[String],
+    regionMap: mutable.HashMap[String, List[(Int, Int)]]
+  ): Boolean = {
     val (row, col) = position
     val regionValue = regionGrid.getMatrixValue(position)
     val regionPositions = regionMap(regionValue)
-    
-    // Faz uma lista de valores adjacentes à posição usando isValidPosition e getMatrixValue
-    val adjacentesValues = List(
+
+    val adjacentValues = List(
       (row - 1, col),
       (row + 1, col),
       (row, col - 1),
       (row, col + 1)
     ).filter(valueGrid.isValidPosition).map(valueGrid.getMatrixValue)
-    
-    // Imprime a lista de valores adjacentes para debug
-    // println(s"Adjacent positions for $position: $adjacentesValues")
 
-    // Se o valor acima estiver dentro da matriz e for da mesma região, será válido se o valor for menor que value
     val isTopValid = if (valueGrid.isValidPosition((row - 1, col)) && regionGrid.getMatrixValue((row - 1, col)) == regionValue) {
       value < valueGrid.getMatrixValue((row - 1, col))
     } else true
 
-    // Se o valor abaixo estiver dentro da matriz e for da mesma região, será válido se o valor for maior que value
     val isBottomValid = if (valueGrid.isValidPosition((row + 1, col)) && regionGrid.getMatrixValue((row + 1, col)) == regionValue) {
       value > valueGrid.getMatrixValue((row + 1, col))
     } else true
 
     !(
-      // Verifica se a posição já está ocupada por algum valor diferente de 0
       valueGrid.getMatrixValue(position) != 0 ||
-      // Verifica se o número está entre 1 e N, onde N é o tamanho da região
       value < 1 || value > regionPositions.length ||
-      // Verifica se algum dos valores adjacentes é igual ao valor que queremos inserir
-      adjacentesValues.contains(value) ||
-      // Verifica se o valor já está na região
+      adjacentValues.contains(value) ||
       regionPositions.map(valueGrid.getMatrixValue).contains(value) ||
-      // Verifica se o valor é maior que o valor da célula de cima (se estiver na mesma região)
       !isTopValid ||
-      // Verifica se o valor é menor que o valor da célula de baixo (se estiver na mesma região)
       !isBottomValid
     )
+  }
+
+  /**
+   * Tenta colocar valores válidos na posição atual.
+   * Input: Recebe a matriz de valores, de regiões, a linha e coluna atual e uma lista de valores a serem testados.
+   * Output:
+   * Caso a lista de valores a serem testados esteja vazia, retorna None.
+   * Caso o valor possa ser inserido na posição atual, retorna a matriz de valores com o valor inserido.
+   * Caso o valor não possa ser inserido na posição atual, chama a função recursivamente com a lista de valores
+   * restantes.
+   */
+  @tailrec
+  private def tryValues(
+    row: Int,
+    col: Int,
+    valuesToTry: List[Int],
+    valueGrid: Matrix[Int],
+    regionGrid: Matrix[String],
+    regionMap: mutable.HashMap[String, List[(Int, Int)]]
+  ): Option[Matrix[Int]] = {
+    if (valuesToTry.isEmpty) {
+      None
+    } else {
+      val value = valuesToTry.head
+      if (canInsertValue((row, col), value, valueGrid, regionGrid, regionMap)) {
+        val updatedValueGrid = valueGrid.setMatrixValue((row, col), value)
+        val nextPosition = if (col == valueGrid.numCols - 1) (row + 1, 0) else (row, col + 1)
+        solveKojun(updatedValueGrid, regionGrid, nextPosition, regionMap) match {
+          case Some(solution) => Some(solution)
+          case None => tryValues(row, col, valuesToTry.tail, valueGrid, regionGrid, regionMap)
+        }
+      } else {
+        tryValues(row, col, valuesToTry.tail, valueGrid, regionGrid, regionMap)
+      }
+    }
   }
 
   /**
    * Resolve o Kojun a partir da uma matriz de valores (Int) e da matriz de regiões (Char).
    * Por ser uma função recursiva, recebe um ponto de partida (linha e coluna) para aplicar o backtracking. A função
    * normalmente é chamada externamente com (0, 0).
-   * O retorno é um monad Maybe, que pode ser Nothing (caso não haja solução) ou Just Matrix Int (caso haja solução)
-   * onde a matriz de inteiros representa a solução que foi encontrada para o Kojun.
+   * O retorno é um Option que pode ser None caso não exista solução ou Some caso exista.
    */
-  private def backtrack(row: Int, col: Int): Option[Matrix[Int]] = {
+  @tailrec
+  private def solveKojun(
+    valueGrid: Matrix[Int],
+    regionGrid: Matrix[String],
+    position: Position,
+    regionMap: mutable.HashMap[String, List[(Int, Int)]]
+  ): Option[Matrix[Int]] = {
+    val (row, col) = position
     if (row == valueGrid.numRows) {
-      Some(valueGrid) // Base case: Reached the end of the matrix, return the solution
+      Some(valueGrid)
     } else if (col == valueGrid.numCols) {
-      // Move to the next row when reaching the end of the current row
-      backtrack(row + 1, 0)
-    } else if (valueGrid.getMatrixValue((row, col)) != 0) {
-      // Skip to the next column if the position is already occupied
-      backtrack(row, col + 1)
+      solveKojun(valueGrid, regionGrid, (row + 1, 0), regionMap)
+    } else if (valueGrid.isValidPosition(position) && valueGrid.getMatrixValue(position) != 0) {
+      solveKojun(valueGrid, regionGrid, (row, col + 1), regionMap)
     } else {
-      // Try inserting values from 1 to maxRegionSize
-      def tryValues(values: List[Int]): Option[Matrix[Int]] = values match {
-        // Caso não haja mais valores para tentar, retorna None e imprime onde parou, com qual valor e a matriz atual
-        case Nil =>
-          println(s"Backtracking at position ($row, $col)")
-          println(s"Current value: ${valueGrid.getMatrixValue((row, col))}")
-          valueGrid.printMatrix()
-          None
-        case value :: rest =>
-          if (canInsertValue((row, col), value)) {
-            // If the value can be inserted, update the matrix and continue with the next position
-            val updatedGrid = valueGrid.setMatrixValue((row, col), value)
-            backtrack(row, col + 1) match {
-              case Some(result) => Some(result) // Solution found
-              case None => tryValues(rest) // Continue trying the next value
-            }
-          } else {
-            // Value cannot be inserted, try the next value
-            tryValues(rest)
-          }
-      }
-
-      val currentRegionSize = regionMap(regionGrid.getMatrixValue((row, col))).length
-      tryValues(1 to currentRegionSize toList)
+      val maxRegionSize = regionMap(regionGrid.getMatrixValue(position)).length
+      tryValues(row, col, (1 to maxRegionSize).toList, valueGrid, regionGrid, regionMap)
     }
   }
 
   def solve(): Option[Matrix[Int]] = {
-    // solveKojun(0, 0, regionGrid.numRows)
-
-    // Tenta inserir valores de teste e imprime se foi possível ou não
-    /* println("Can insert value: (0,0), 1 (should be false)")
-    println(canInsertValue((0, 0), 1))
+    /*
+    // Testa os diferentes casos de canInsertValue
+    println("Can insert value: (0,0), 1 (should be false)")
+    println(canInsertValue((0, 0), 1, valueGrid, regionGrid, regionMap))
     println("Can insert value: (5,5), 3 (should be false)")
-    println(canInsertValue((5, 5), 3))
+    println(canInsertValue((5, 5), 3, valueGrid, regionGrid, regionMap))
     println("Can insert value: (5,5), 1 (should be true)")
-    println(canInsertValue((5, 5), 1))
+    println(canInsertValue((5, 5), 1, valueGrid, regionGrid, regionMap))
     println("Can insert value: (1,4), 3 (should be false)")
-    println(canInsertValue((1, 4), 3))
+    println(canInsertValue((1, 4), 3, valueGrid, regionGrid, regionMap))
     println("Can insert value: (1,4), 4 (should be false)")
-    println(canInsertValue((1, 4), 4))
+    println(canInsertValue((1, 4), 4, valueGrid, regionGrid, regionMap))
     println("Can insert value: (1,4), 6 (should be true)")
-    println(canInsertValue((1, 4), 6))
+    println(canInsertValue((1, 4), 6, valueGrid, regionGrid, regionMap))
     println("Can insert value: (1,0), 2 (should be false)")
-    println(canInsertValue((1, 0), 2))
+    println(canInsertValue((1, 0), 2, valueGrid, regionGrid, regionMap))
     println("Can insert value: (1,0), 3 (should be false)")
-    println(canInsertValue((1, 0), 3)) */
+    println(canInsertValue((1, 0), 3, valueGrid, regionGrid, regionMap))
+    */
 
-    // Chama a função de backtracking recursiva
-    backtrack(0, 0)
+    solveKojun(valueGrid, regionGrid, (0, 0), regionMap)
   }
 }

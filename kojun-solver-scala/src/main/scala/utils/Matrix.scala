@@ -8,8 +8,9 @@ class Matrix[A](private val rows: List[List[A]]) {
 
   def getMatrixValue(position: (Int, Int)): A = {
     val (row, col) = position
-    if (isValidPosition(position)) rows(row)(col)
-    else throw new IllegalArgumentException("Trying to get from an invalid position from the matrix")
+    if (isValidPosition(position)) {
+      rows(row)(col)
+    } else throw new IllegalArgumentException("Trying to get an invalid position from the matrix at " + position)
   }
 
   def setMatrixValue(position: (Int, Int), value: A): Matrix[A] = {

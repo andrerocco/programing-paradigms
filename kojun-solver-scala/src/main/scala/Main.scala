@@ -8,24 +8,8 @@ object Main {
     // Lê arquivos que contém
     // O tamanho N da matriz (N x N) na primeira linha
     // A matriz de valores (ocupando N linhas)
-    /*
-    2 0 0 0 1 0
-    0 0 0 3 0 0
-    0 3 0 0 5 3
-    0 0 0 0 0 0
-    0 0 3 0 4 2
-    0 0 0 0 0 0
-     */
     // A matriz de regiões (ocupando N linhas)
-    /* 
-    a a b b b c
-    d d d d d c
-    e f f f d g
-    e e e f g g
-    h h i j j j
-    k k i i j j
-     */
-    val filePath = "src/inputs/6x6/kojun_1.txt" // Relative path to the file
+    val filePath = "src/inputs/10x10/kojun_10.txt" // Relative path to the file
 
     // Abre e lê o arquivo
     val fileContents = openFile(filePath)
@@ -49,10 +33,10 @@ object Main {
     val regionMatrix = new Matrix[String](regionGrid)
 
     // Imprime a matriz de valores e regiões
-    /* println("Value matrix:")
+    println("Value matrix:")
     valueMatrix.printMatrix()
-    println("Region matrix:")
-    regionMatrix.printMatrix() */
+    println("\nRegion matrix:")
+    regionMatrix.printMatrix()
 
     // Resolve o quebra-cabeça
     val solver = new KojunSolver(valueMatrix, regionMatrix)
@@ -61,7 +45,7 @@ object Main {
     // Imprime a solução
     solution match {
       case Some(solutionMatrix) =>
-        println("Solution:")
+        println("\nSolution:")
         solutionMatrix.printMatrix()
       case None =>
         println("No solution found.")
