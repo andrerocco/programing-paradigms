@@ -138,26 +138,6 @@ class KojunSolver(valueGrid: Matrix[Int], regionGrid: Matrix[String]) {
   }
 
   def solve(): Option[Matrix[Int]] = {
-    /*
-    // Testa os diferentes casos de canInsertValue
-    println("Can insert value: (0,0), 1 (should be false)")
-    println(canInsertValue((0, 0), 1, valueGrid, regionGrid, regionMap))
-    println("Can insert value: (5,5), 3 (should be false)")
-    println(canInsertValue((5, 5), 3, valueGrid, regionGrid, regionMap))
-    println("Can insert value: (5,5), 1 (should be true)")
-    println(canInsertValue((5, 5), 1, valueGrid, regionGrid, regionMap))
-    println("Can insert value: (1,4), 3 (should be false)")
-    println(canInsertValue((1, 4), 3, valueGrid, regionGrid, regionMap))
-    println("Can insert value: (1,4), 4 (should be false)")
-    println(canInsertValue((1, 4), 4, valueGrid, regionGrid, regionMap))
-    println("Can insert value: (1,4), 6 (should be true)")
-    println(canInsertValue((1, 4), 6, valueGrid, regionGrid, regionMap))
-    println("Can insert value: (1,0), 2 (should be false)")
-    println(canInsertValue((1, 0), 2, valueGrid, regionGrid, regionMap))
-    println("Can insert value: (1,0), 3 (should be false)")
-    println(canInsertValue((1, 0), 3, valueGrid, regionGrid, regionMap))
-    */
-
     solveKojun(valueGrid, regionGrid, (0, 0), regionMap)
   }
 }
