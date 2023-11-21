@@ -2,12 +2,9 @@
 
 O problema lógico a seguir pode ser acessado em: https://rachacuca.com.br/logica/problemas/esquadrilha-de-avioes-ii/
 
-Nesse problema temos uma esquadrilha de 5 aviões em uma exibição aérea. Cada um dos aviões solta fumaça de uma cor e
-possui uma anomalia diferente. Além disso, cada avião é pilotado um experiente piloto, que pratica um esporte, gosta
-de uma bebida e nasceu num estado brasileiro diferente.
+Nesse problema temos uma esquadrilha de 5 aviões em uma exibição aérea. Cada um dos aviões solta fumaça de uma cor e possui uma anomalia diferente. Além disso, cada avião é pilotado um experiente piloto, que pratica um esporte, gosta de uma bebida e nasceu num estado brasileiro diferente.
 
-Sua tarefa é encontrar todas as informações a partir das dicas dadas. Lembrando de prestar atenção no "exatamente à
-esquerda/direita" e no "em algum lugar à esquerda/direita".
+Sua tarefa é encontrar todas as informações a partir das dicas dadas. Lembrando de prestar atenção no "exatamente à esquerda/direita" e no "em algum lugar à esquerda/direita".
 
 -   [ ] O Cap. Farfarelli está em algum lugar à esquerda de quem gosta de praticar Futebol.
 -   [ ] Quem gosta de beber Água também gosta de Pescar nos finais-de-semana.
